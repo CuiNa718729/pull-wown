@@ -1,0 +1,346 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="full-screen" content="yes">
+    <title>super X</title>
+    <style>
+        @media (max-width: 320px) {
+            input{
+                width: 2.3rem!important;
+            }
+        }
+        html, body, div, p, ul, ol, li, h1, h2, h3, h4, h5, h6, img {
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            font-size: 0.16rem;
+            position: relative;
+        }
+        .parent div:first-child{
+            margin-left: 0.15rem;
+            margin-bottom: 0.3rem;
+        }
+        .parent div:first-child{
+            margin-left: 0.3rem;
+            margin-top: 0.3rem;
+        }
+        .rankTitle{
+            width: 100%;
+            height: 0.7rem;
+            line-height: 0.7rem;
+            font-size: 0.3rem;
+            background: #3640a7;
+            color: #fff;
+            padding-left: 0.2rem;
+            margin-bottom: 0.4rem;
+        }
+        .table{
+            width: 95%;
+            margin: 0.3rem auto 0;
+            border:0.01rem solid #ccc;
+            text-align: center;
+        }
+        td{
+            height: 0.65rem;
+            border: 0.01rem solid #ccc;
+        }
+        .dateLable{
+            color: #3640a7;
+            font-size: 0.36rem;
+            font-weight: 600;
+            margin-left: -0.2rem;
+        }
+        input{
+            width: 2.4rem;
+            height: 0.4rem;
+            margin-top: 0.2rem;
+        }
+        #query,.operation{
+            width: 1rem;
+            height: 0.55rem;
+            line-height: 0.55rem;
+            border-radius: 0.05rem;
+            color: #ffffff;
+            background: #ba3382;
+            outline: 0;
+            border: 0;
+        }
+        .operation{
+            width: 0.8rem;
+            height: 0.5rem;
+            line-height:0.5rem;
+            background: #3640a7;
+        }
+        .pages {
+            position: fixed;
+            left: 2.4rem;
+            bottom: 0.5rem;
+        }
+        .pages a {
+            color:#999;
+            box-sizing: border-box;
+            height: 20px;
+            min-width: 20px;
+            border-radius: 2px;
+            display: inline-block;
+            border:1px solid #ddd;
+            margin: 0 2px;
+            padding: 0 4px;
+            line-height: 18px;
+        }
+        .pages a:hover {
+            text-decoration: none;
+            border-color:#f8b551;
+            color:#f8b551;
+            cursor: pointer;
+        }
+        .pages a.cur {
+            border-color:#f8b551;
+            background: #f8b551;
+            color: #fff;
+        }
+        .pages a.default {
+            border-color: #ddd;
+            color:#ddd;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+	<div>
+		<p class="rankTitle">排行榜</p>
+		<div class="parent">
+			<div>
+				<form>
+					<div class="form-group">
+						<label class="dateLable">查询时间:</label> <br/>
+						<input type="text" id="beginTime" autocomplete="off"/>  -
+						<input type="text" id="endTime" autocomplete="off"/>
+						<button id="query" type="button">查询</button>
+					</div>
+				</form>
+			</div>
+			<div class="rankID">
+                  <!--<h2 class="matchID">比赛ID: <span></span></h2>-->
+				  <table class="table" id="targetTable" cellpadding="0" cellspacing="0">
+					<thead>
+						<tr>
+							<td>国家</td>
+                            <td>比赛级别</td>
+							<td>赛季</td>
+							<td>轮次</td>
+                            <td>主队</td>
+                            <td>客队</td>
+                            <td>操作</td>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+			<div class="pages"></div>
+		</div>
+	</div>
+    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.2.1/jquery.js"></script>
+    <script src="laydate/laydate.js"></script>
+    <script >
+        function get_hfs() {
+            document.documentElement.style.fontSize = document.documentElement.clientWidth / 7.5 + 'px';
+        }
+        get_hfs();
+
+        function throttle(method, context) {
+            clearTimeout(method.timer);
+            method.timer = setTimeout(function() {
+                method.call(context);
+            }, 100)
+        }
+        window.onresize = function() {
+            throttle(get_hfs);
+        };
+
+        laydate.render({
+            elem:"#beginTime",
+            theme:"molv"
+        });
+        laydate.render({
+            elem:"#endTime",
+            theme:"molv"
+        });
+        //时间显示
+        function showTime(){
+            var now=new Date();
+            var curYear=now.getFullYear();
+            var curMonth=now.getMonth()+1;
+            if(curMonth<10){
+                curMonth="0"+curMonth;
+            }
+            var curDate=now.getDate();
+            if(curDate<10){
+                curDate="0"+curDate;
+            }
+            $("#endTime").val(curYear+"-"+curMonth+"-"+curDate);
+
+            var preTime = new Date(now.getTime() - 24*60*60*1000); //前一天
+            var preYear=preTime.getFullYear();
+            var preMonth=preTime.getMonth()+1;
+            if(preMonth<10){
+                preMonth="0"+preMonth;
+            }
+            var preDate=preTime.getDate();
+            if(preDate<10){
+                preDate="0"+preDate;
+            }
+            $("#beginTime").val(preYear+"-"+preMonth+"-"+preDate);
+        }
+        showTime();
+
+
+        // 进入页面默认显示所有数据
+         queryData();
+
+        //页码点击事件
+        var currentCount=1;//请求页码
+        var pageCount;//总页码数
+        var offset;
+        $(".pages").on('click','a',function(e){
+            e.preventDefault();//清除a标记的默认行为
+            var num=$(this).html();
+            var id=$(this).attr("id");
+            offset=(num-1)*5;
+            if(id=="prePage"){//用户点击的为上一页
+                if(currentCount==1){
+                    currentCount=1;
+                }else{
+                    currentCount--;
+                }
+            }else if(id == "nextPage"){//当用户点击的是下一页的时候
+                if(currentCount==pageCount) {
+                    currentCount=pageCount;
+                }else{
+                    currentCount++;
+                }
+            }else{//点击页码的时候
+                currentCount=+num;
+            }
+            queryData();
+        });
+        function queryData(){
+            var beginTime=$("#beginTime").val();
+            var endTime=$("#endTime").val();
+            var data={"limit":10,"offset":currentCount};
+            if(beginTime.length>0){data.beginTime = beginTime}
+            if(endTime.length>0){data.endTime = endTime}
+            if(beginTime>endTime){
+                alert("时间输入有误");
+            }else{
+                $.ajax({
+                    type:"post",
+                    url:"http://47.95.244.131:18625/Rankings/match",
+                    cache:"false",
+                    data:data,
+                    success:function(data){
+                        if(data.meta.code==0){
+                            console.log(data.data);
+                            var html="";
+                            for(var i=0;i<data.data.data.length;i++){
+                                html+=`
+                                    <tr>
+                                        <td>${data.data.data[i].CountryName}</td>
+                                        <td>${data.data.data[i].CompetitionName}</td>
+                                        <td>${data.data.data[i].SeasonName}</td>
+                                        <td>${data.data.data[i].RoundName}</td>
+                                        <td>${data.data.data[i].HomeTeamName}</td>
+                                        <td>${data.data.data[i].AwayTeamName}</td>
+                                        <td class="MatchID" style="display:none;">${data.data.data[i].MatchID}</td>
+                                        <td class="TournamentID" style="display:none;">${data.data.data[i].TournamentID}</td>
+                                        <td>
+                                           <button class="operation">详情</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                            $("#targetTable tbody").html(html);
+                            //动态显示页码
+                            pageCount= data.data.pageCount;
+                            var pageHtml='<a id="prePage">上一页</a>';
+                            // 总页数大于6的时候
+                            if(pageCount > 6){
+                                // 当前页数小于5的时候
+                                if(currentCount < 5){
+                                    for(var d = 1;d < 6;d++){
+                                        if(currentCount == d){
+                                            pageHtml+='<a class="cur">'+d+'</a>';
+                                        }else{
+                                            pageHtml+='<a>'+d+'</a>';
+                                        }
+                                    }
+                                    pageHtml+='...';
+                                    pageHtml+='<a>'+pageCount+'</a>';
+                                }else{
+                                    // 判断页码在末尾的时候
+                                    if(currentCount<pageCount-3){
+                                        for(var d = currentCount-2;d < currentCount+3;d++){
+                                            if(currentCount == d){
+                                                pageHtml+='<a class="cur">'+d+'</a>';
+                                            }else{
+                                                pageHtml+='<a>'+d+'</a>';
+                                            }
+                                        }
+                                        pageHtml+='...';
+                                        pageHtml+='<a>'+pageCount+'</a>';
+                                    }else{
+                                        //页码在中间部分的时候
+                                        pageHtml+='<a>1</a>';
+                                        pageHtml+='...';
+                                        for(var d = pageCount-4;d < pageCount+1;d++){
+                                            if(currentCount == d){
+                                                pageHtml+='<a class="cur">'+d+'</a>';
+                                            }else{
+                                                pageHtml+='<a>'+d+'</a>';
+                                            }
+                                        }
+                                    }
+                                }
+                            }else{//页面总数小于6的时候
+                                for(d = 1;d < pageCount+1;d++){
+                                    if(currentCount == d){
+                                        pageHtml+='<a class="cur">'+d+'</a>';
+                                    }else{
+                                        pageHtml+='<a>'+d+'</a>';
+                                    }
+                                }
+                            }
+                            pageHtml+='<a id="nextPage">下一页</a>';
+                            $('.pages').html(pageHtml);
+                            //为上一页下一页添加样式
+                            if(currentCount == 1){
+                                $('.pages a:first').addClass('default');
+                            }
+                            if(currentCount == pageCount){
+                                $('.pages a:last').addClass('default');
+                            }
+                        }else{
+                            $("#targetTable tbody").html("");
+                            $('.pages').html("");
+                        }
+                    }
+                })
+            }
+        }
+
+        $("#query").click(function(){
+            queryData();
+        });
+
+        $("#targetTable").on("click",".operation",function(){
+            var MatchID=$(this).parents("td").siblings(".MatchID").html();
+            var TournamentID=$(this).parents("td").siblings(".TournamentID").html();
+            window.location.href="rankDetail.html?MatchID="+ MatchID +"&TournamentID=" +TournamentID;
+        })
+    </script>
+</body>
+</html>
