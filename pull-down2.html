@@ -209,7 +209,7 @@
     function queryData(currentCount){
         var beginTime=$("#beginTime").val();
         var endTime=$("#endTime").val();
-        var data={"offset":currentCount,"limit":16};
+        var data={"offset":currentCount,"limit":10};
         if(beginTime.length>0){data.beginTime = beginTime}
         if(endTime.length>0){data.endTime = endTime}
         if(beginTime>endTime){
@@ -240,21 +240,18 @@
                                 gotData(orders);
                             }
                         }
-                        // if (orders.length < 16 && orders.length > 0) {
-                        //     $('#targetTable tbody').append('<tr class="nomore" style="color:#faf;"><td colspan="7">没有更多了~</td></tr>');
-                        //     return;
-                        // }
-                       // 、
+                        if (orders.length < 10 && orders.length > 0) {
+                            $('#targetTable tbody').append('<tr class="nomore" style="color:#faf;"><td colspan="7">没有更多了~</td></tr>');
+                            return;
+                        }
+                        else {
                             $(window).off().on('scroll', function () {
                                 console.log('a');
                                 fetchData(queryData);
                             });
-                        // }
+                        }
                     }else{
-                        //  $("#targetTable tbody").html("");
-                        // alert("数据没有找到")
-                        $('#targetTable tbody').append('<tr class="nomore" style="color:#faf;"><td colspan="7">没有更多了~</td></tr>');
-                        return;
+                        // $("#targetTable tbody").html("");
                     }
                 }
             })
@@ -289,7 +286,7 @@
         if (!isLoading && !isEnd && (scrollTop + windowHeight == scrollHeight)) {
             isLoading = true;
             currentCount++;
-            // $('#targetTable tbody').append('<tr class="nomore" style="color:#faf;"><td colspan="7">没有更多了~</td></tr>');
+            $('#targetTable tbody').append('<tr class="nomore" style="color:#faf;"><td colspan="7">没有更多了~</td></tr>');
             fn.call(window, currentCount);
         }
     }
